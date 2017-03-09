@@ -1,0 +1,484 @@
+\section{Code}
+\begin{verbatim}
+#include "stdio.h"
+#include "stdlib.h"
+#include "string.h"
+#include "assert.h"
+#include "limits.h"
+#include "time.h"
+
+// Pense Bete : Partir de id-1
+
+typedef struct station {
+	int id;
+	char nomStation[50];
+	char ligne[15];
+	struct station ** correspondance;
+	int nbCorrespondance;
+} station;
+
+typedef struct metro
+{
+	station * stations;
+	int nbstations;
+} metro;
+
+typedef struct dijk {
+	char dejaVu;
+	char ligneActuel;
+	int stationAvant;
+	int poids;
+} dijk;
+
+
+typedef struct entre{
+	int a;
+	int b;
+} entre;
+
+typedef struct Bstation{
+	char nomStation[50];
+	char ligne[15];
+	int premierBrin;
+} Bstation;
+
+typedef struct brin{
+	int indexStation;
+	int brinSuivant;
+} brin;
+
+typedef struct Bmetro {
+	Bstation * Bstations;
+	int nbStations;
+	brin * brins;
+	int nbBrins;
+} Bmetro;
+
+metro creerMetro(){
+	int a = 1;
+
+	// Declaration metro
+	metro metroBerlin;
+	metroBerlin.nbstations = 173;
+	metroBerlin.stations = malloc(sizeof(station)*173);
+	assert(metroBerlin.stations);
+
+	// Declaration Station
+
+	station *station1 = metroBerlin.stations;
+	station1->id = 1;
+	strcpy(station1->nomStation, "Uhlandstraße");
+	strcpy(station1->ligne, "U1");
+	station1->nbCorrespondance=1;
+	station1->correspondance = malloc(sizeof(station*)*station1->nbCorrespondance);
+	assert(station1->correspondance);
+
+	station *station2 = metroBerlin.stations+a;
+	station2->id = 2;
+	strcpy(station2->nomStation, "Kurfürsten-damm");
+	strcpy(station2->ligne, "U1 U9");
+	station2->nbCorrespondance=4;
+	a++;
+	station2->correspondance = malloc(sizeof(station*)*station2->nbCorrespondance);
+	assert(station2->correspondance);
+
+	station *station3 = metroBerlin.stations+a;
+	station3->id = 3;
+	strcpy(station3->nomStation, "Wittenberplatz");
+	strcpy(station3->ligne, "U1 U2 U3");
+	station3->nbCorrespondance=4;
+	a++;
+	station3->correspondance = malloc(sizeof(station*)*station3->nbCorrespondance);
+	assert(station3->correspondance);
+
+	
+	[...]
+
+
+	station *station173 = metroBerlin.stations+a;
+	station173->id = 173;
+	strcpy(station173->nomStation, "Spittelmarkt");
+	strcpy(station173->ligne, "U2");
+	station173->nbCorrespondance=2;
+	a++;
+	station173->correspondance = malloc(sizeof(station*)*station173->nbCorrespondance);
+	assert(station173->correspondance);
+
+
+
+	// Correspondance Ligne 1
+
+	*(station1->correspondance) = station2;
+
+	*(station2->correspondance) = station1;
+	*(station2->correspondance+1) = station3;
+	*(station2->correspondance+2) = station23;
+	*(station2->correspondance+3) = station50;
+
+	*(station3->correspondance) = station23;
+	*(station3->correspondance+1) = station4;
+	*(station3->correspondance+2) = station2;
+	*(station3->correspondance+3) = station51;
+
+	[...]
+
+	*(station172->correspondance) = station87;
+	*(station172->correspondance+1) = station147;
+	return metroBerlin;
+}
+
+
+Bmetro creerMetroBrin(metro m){
+	int i=0;
+	int j=0;
+	int b;
+	int c;
+	//int occ;
+	int temp=INT_MAX;
+	int temp2=INT_MAX;
+	//maloc du nombre de correspondance*2+1 pour l'index 0 ?
+	//Declaration metro
+	Bmetro BmetroBerlin;
+	BmetroBerlin.nbStations = m.nbstations;
+	BmetroBerlin.Bstations = malloc(sizeof(Bstation)*(BmetroBerlin.nbStations));
+	BmetroBerlin.nbBrins = 1;
+	for(i=0; i<m.nbstations; i++){
+		BmetroBerlin.nbBrins+=((m.stations+i)->nbCorrespondance);
+	}
+	BmetroBerlin.brins = malloc(sizeof(Bstation)*BmetroBerlin.nbBrins);
+	assert(BmetroBerlin.Bstations);
+	for(i=0; i<m.nbstations;i++){
+		strcpy((BmetroBerlin.Bstations+i)->nomStation, (m.stations+i)->nomStation);
+		strcpy((BmetroBerlin.Bstations+i)->ligne, (m.stations+i)->ligne);
+	}
+	
+	//Initialisation Brin
+	for(i=0; i<BmetroBerlin.nbBrins;i++){
+		(BmetroBerlin.brins+i)->brinSuivant=INT_MAX;
+		(BmetroBerlin.brins+i)->indexStation=INT_MAX;
+	}
+	for(i=0; i<BmetroBerlin.nbStations;i++){
+		(BmetroBerlin.Bstations+i)->premierBrin=INT_MAX;
+	}
+	b=1;
+	for(i=0; i<BmetroBerlin.nbStations;i++){
+		for(j=0; j<(m.stations+i)->nbCorrespondance; j++){
+			c=(*((m.stations+i)->correspondance+j))->id-1;
+			if(i < c){
+				if((BmetroBerlin.Bstations+c)->premierBrin==INT_MAX)
+					(BmetroBerlin.Bstations+c)->premierBrin=BmetroBerlin.nbBrins/2-b;
+				if((BmetroBerlin.Bstations+i)->premierBrin==INT_MAX)
+					(BmetroBerlin.Bstations+i)->premierBrin=BmetroBerlin.nbBrins/2+b;
+				(BmetroBerlin.brins+(BmetroBerlin.nbBrins/2+b))->indexStation=i;
+				(BmetroBerlin.brins+(BmetroBerlin.nbBrins/2-b))->indexStation=c;
+				b++;
+			}
+			//printf("%d\n", b);
+		}
+	}
+	// Debug :
+	// for(i=0; i<BmetroBerlin.nbBrins; i++){
+	// 	if(i > 185)
+	// 		printf("Brin %d(%d)-> %d Brin Suivant :\n", i, i-BmetroBerlin.nbBrins/2,(BmetroBerlin.brins+i)->indexStation);
+	// 	if(i == 185)
+	// 		printf("Brin %d(0) -> %d Brin Suivant :\n", i, (BmetroBerlin.brins+i)->indexStation);
+	// 	if(i < 185)
+	// 		printf("Brin %d(%d)-> %d Brin Suivant :\n", i, i-(BmetroBerlin.nbBrins/2),(BmetroBerlin.brins+i)->indexStation);
+	// }
+	for(i=0; i<BmetroBerlin.nbStations; i++){
+			for(j=0;j<BmetroBerlin.nbBrins; j++){
+				//printf("%d\n", j);
+				if((BmetroBerlin.brins+j)->indexStation == i){
+					temp = j;
+					temp2 = j;
+					(BmetroBerlin.brins+j)->brinSuivant = temp;
+					j++;
+					break;
+				}
+			}
+			while(j<BmetroBerlin.nbBrins){
+				if((BmetroBerlin.brins+j)->indexStation == i){
+					(BmetroBerlin.brins+j)->brinSuivant = temp2;
+					temp2 = j;
+				}
+				j++;
+			}
+			(BmetroBerlin.brins+temp)->brinSuivant =temp2;
+	}
+	printf("\n\n\n");
+
+	// debug
+	// for(i=0; i<BmetroBerlin.nbBrins; i++){
+	// 	if(i > 185)
+	// 		printf("Brin %d(%d)-> %d Brin Suivant :%d\n", i, i-BmetroBerlin.nbBrins/2,(BmetroBerlin.brins+i)->indexStation, (BmetroBerlin.brins+i)->brinSuivant);
+	// 	if(i == 185)
+	// 		printf("Brin %d(0) -> %d Brin Suivant :%d\n", i, (BmetroBerlin.brins+i)->indexStation, (BmetroBerlin.brins+i)->brinSuivant);
+	// 	if(i < 185)
+	// 		printf("Brin %d(%d)-> %d Brin Suivant : %d\n", i, i-(BmetroBerlin.nbBrins/2),(BmetroBerlin.brins+i)->indexStation, (BmetroBerlin.brins+i)->brinSuivant);
+	// }
+	return BmetroBerlin;
+}
+
+
+void afficheStation(metro m){
+	int i;
+	for(i=0; i < m.nbstations; i++){
+		printf("La station %d se nomme : \033[4m%s\033[0m disponible sur la/les ligne(s) : %s.\n",i+1,(m.stations+i)->nomStation, (m.stations+i)->ligne);
+	}
+}
+
+void afficheStation2(Bmetro m){
+	int i;
+	for(i=0; i < m.nbStations; i++){
+		printf("La station %d se nomme : \033[4m%s\033[0m disponible sur la/les ligne(s) : %s.\n",i+1,(m.Bstations+i)->nomStation, (m.Bstations+i)->ligne);
+	}
+}
+
+char memeLigne2(metro m, char ligneActuel, int idb){
+	int i;
+
+	for(i=1; i < 11;i=i+3){
+		//printf("%c =? %c\n", temp1[i], temp2[j]);
+		if((m.stations+idb)->ligne[i] == ligneActuel && (m.stations+idb)->ligne[i-1] == 'U')
+			return 1;
+	}
+	return 0;
+}
+
+char BmemeLigne(Bmetro m, char ligneActuel, int idb){
+	int i;
+
+	for(i=1; i < 11;i=i+3){
+		//printf("%c =? %c\n", temp1[i], temp2[j]);
+		if((m.Bstations+idb)->ligne[i] == ligneActuel && (m.Bstations+idb)->ligne[i-1] == 'U')
+			return 1;
+	}
+	return 0;
+}
+
+char ligneComp(metro m, int ida, int idb){
+	//printf("Appel ligneComp\n");
+	int i;
+	int j;
+
+	for(j=1; j < 11;j=j+3){
+		for(i=1; i < 11;i=i+3){
+			if((m.stations+ida)->ligne[i] == (m.stations+idb)->ligne[j]){
+				//printf("Insertion boucle avec : %c\n", (m.stations+ida)->ligne[i]);
+				return (m.stations+ida)->ligne[i];
+			}
+		}
+	}
+	return 0;
+}
+
+char BligneComp(Bmetro m, int ida, int idb){
+	//printf("Appel ligneComp\n");
+	int i;
+	int j;
+
+	for(j=1; j < 11;j=j+3){
+		for(i=1; i < 11;i=i+3){
+			if((m.Bstations+ida)->ligne[i] == (m.Bstations+idb)->ligne[j]){
+				//printf("Insertion boucle avec : %c\n", (m.stations+ida)->ligne[i]);
+				return (m.Bstations+ida)->ligne[i];
+			}
+		}
+	}
+	return 0;
+}
+
+int oppose(Bmetro m, int brin){
+	int temp = brin;
+	if(brin < m.nbBrins){
+		temp = (m.nbBrins/2)-brin;
+		brin = (m.nbBrins/2)+temp;
+		return brin;
+	}
+	else{
+		brin = (m.nbBrins)-brin;
+		return brin;
+	}
+
+}
+
+void dijkstraPurSansModificationJulie(metro m, int ida, int idb){
+	int securite;
+	int i;
+	int b;
+	int debut = ida;
+	int poids;
+	dijk liste[m.nbstations];
+
+	// Initiation Dijkstra
+	for(i=0;i<m.nbstations;i++){
+		liste[i].dejaVu = 0;
+		liste[i].poids = INT_MAX;
+		liste[i].stationAvant = -1;
+	}
+	liste[ida].poids = 0;
+	liste[ida].ligneActuel = 0;
+
+	//Dijkstra
+	while(ida != idb){
+		liste[ida].dejaVu = 1;
+		
+		// Traitement des correspondances.
+		for(i=0; i < (m.stations+ida)->nbCorrespondance; i++){
+			b= ((*((m.stations+ida)->correspondance+i))->id-1);
+			if(liste[b].dejaVu !=1){
+				// Erreur Potentiel, id-1 pour l'index 0 ? Trop de confusion. Note a moi même : faire le fucking début de graphes a 0 pour eviter la confusion.
+				if(memeLigne2(m, liste[ida].ligneActuel, b)){
+					poids = liste[ida].poids+1;
+				}
+				else{
+					poids = liste[ida].poids+2;
+				}
+				if(poids < liste[b].poids){
+					if(memeLigne2(m, liste[ida].ligneActuel, b))
+						liste[b].ligneActuel = liste[ida].ligneActuel;
+					else
+						liste[b].ligneActuel = ligneComp(m, ida, b);
+					liste[b].poids = poids;
+					liste[b].stationAvant = (m.stations+ida)->id-1;
+				}
+			}
+		}
+		securite = ida;
+		poids = INT_MAX;
+		for(i=0; i<m.nbstations;i++){
+
+			if(!liste[i].dejaVu && liste[i].poids<poids){
+				poids = liste[i].poids;
+				ida = i;
+			}
+		}	
+		if(ida == securite){
+			printf("%d\n", ida);
+			printf("La station %s n'as pas pus être atteinte, allez y à pied.\n", (m.stations+idb)->nomStation);
+			return;
+		}
+	}
+	// Affichage de bas en haut
+	i = idb;
+	printf("Attention, Le trajet se lit de bas en haut !\n\n");
+	while(i!=debut){
+		printf("%s via la ligne U%c\n", (m.stations+i)->nomStation, liste[i].ligneActuel);
+		i = liste[i].stationAvant;
+	}
+	printf("%s\n", (m.stations+debut)->nomStation);
+}
+
+
+void DijkstraBrin(Bmetro m, int ida, int idb){
+	int securite;
+	int i;
+	int b;
+	int debut = ida;
+	int poids;
+	int temp;
+	int c;
+	int temp2;
+	int brinop;
+	dijk liste[m.nbStations];
+
+	// Initiation Dijkstra
+	for(i=0;i<m.nbStations;i++){
+		liste[i].dejaVu = 0;
+		liste[i].poids = INT_MAX;
+		liste[i].stationAvant = -1;
+	}
+	liste[ida].poids = 0;
+	liste[ida].ligneActuel = 0;
+
+	//Dijkstra
+	while(ida != idb){
+		liste[ida].dejaVu = 1;
+		temp = INT_MAX;
+		c = 0;
+
+		temp2 = (m.brins+((m.Bstations+ida)->premierBrin))->brinSuivant;
+		brinop = oppose(m, (m.Bstations+ida)->premierBrin);
+		b = (m.brins+brinop)->indexStation;
+		while(temp != (m.Bstations+ida)->premierBrin){
+			if(c){
+					brinop = oppose(m, temp);
+					b = (m.brins+brinop)->indexStation;
+			}else{
+
+				c++;
+			}
+			temp = temp2;
+			temp2 = (m.brins+temp)->brinSuivant;
+			if(liste[b].dejaVu != 1){
+				if(BmemeLigne(m, liste[ida].ligneActuel, b))
+					poids = liste[ida].poids+1;
+			}
+			else{
+				poids = liste[ida].poids+2;
+			}
+			if(poids < liste[b].poids){
+				if(BmemeLigne(m, liste[ida].ligneActuel, b))
+						liste[b].ligneActuel = liste[ida].ligneActuel;
+				else
+					liste[b].ligneActuel = BligneComp(m, ida, b);
+				liste[b].poids = poids;
+				liste[b].stationAvant = ida;
+			}
+		}
+		securite = ida;
+		poids = INT_MAX;
+		for(i=0; i<m.nbStations;i++){
+
+			if(!liste[i].dejaVu && liste[i].poids<poids){
+				poids = liste[i].poids;
+				ida = i;
+			}
+		}	
+		if(ida == securite){
+			printf("%d\n", ida);
+			printf("La station %s n'as pas pus être atteinte, allez y à pied.\n", (m.Bstations+idb)->nomStation);
+			return;
+		}
+	}
+	// Affiche de bas en haut
+	printf("Attention, Le trajet se lit de bas en haut !\n\n");
+	i = idb;
+	while(i!=debut){
+		printf("%s via la ligne U%c\n", (m.Bstations+i)->nomStation, liste[i].ligneActuel);
+		i = liste[i].stationAvant;
+	}
+	printf("%s\n", (m.Bstations+debut)->nomStation);
+}
+
+
+entre recupStation(){
+	entre ut;
+	ut.a = 0;
+	ut.b = 0;
+		printf("Entrer la station de départ :\n");
+		scanf("%d", &ut.a);
+
+		printf("Entrer la station d'arrivé :\n");
+		scanf("%d", &ut.b);
+	return ut;
+}
+
+int main(){
+	clock_t debut;
+	debut = clock();
+	metro metroBerlin = creerMetro();
+	Bmetro BmetroBerlin = creerMetroBrin(metroBerlin);
+	printf("\nTemps : %f\n", (double)(clock () - debut) / CLOCKS_PER_SEC);
+	afficheStation(metroBerlin);
+	entre ut = recupStation();
+	//afficheStation2(BmetroBerlin);
+	debut = clock();
+	printf("\n\nStructure Vecteur :\n\n");
+	dijkstraPurSansModificationJulie(metroBerlin, (ut.a-1), (ut.b-1));
+	printf("\n\nStructure Brin :\n\n");
+	DijkstraBrin(BmetroBerlin, (ut.a-1), (ut.b-1));
+	printf("\nTemps : %f\n", (double)(clock () - debut) / CLOCKS_PER_SEC);
+}
+
+\end{verbatim}

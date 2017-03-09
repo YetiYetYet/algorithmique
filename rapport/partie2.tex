@@ -1,0 +1,22 @@
+\section{Explication du code}
+\subsection{Les graphes}
+
+Avant de faire l'algorithme, il faut faire son graphe. Et quoi de plus intelligent et beau que de faire son graphe brut et dur dans son code. C'est ainsi que j'ai perdu plusieurs jour à remplir à la main mon graphe en structure vecteur de 2000 lignes station par station correspondance par correspondance. C'est aussi la raison pour laquelle mon programme ne se limite qu'au metro de berlin et ne possede pas en plus les trains/Bus/tramway.
+\smallbreak
+En ce qui concerne la structure du graphe en brin. N'ayant pas l'idée de refaire la même erreur, j'ai pris les donné du premier graphe et je l'ai est inseré dans le graphes en brin.
+
+\subsection{L'algorithme}
+J'utilise une autre structure pour faire fonctionner Djikstra compatible avec les deux version du graphe. C'est une liste de cette structure multiplié par le nombre de station. Elle possède le poid actuel qu'il a fallu pour arriver a la station, la ligne actuel, la station par lequelle elle est arrivé et si l'algorithme est déja passé par cette station.
+On initiale cette liste par des valeurs par defaut.
+\smallbreak
+L'algorithme commence avec trois paramètre en entré : le graphe, l'ID de la station de depart, l'ID de la station d'arrivé. Le code fait bouclé ensuite les stations jusqu'a ce que le second paramètre soit vue.
+\smallbreak
+Une première boucle verifie que la station n'a pas déja été vue, puis parcours toute les correspondances de la station actuel en ajustant le poid. Si il s'agit de la structure en vecteurs, il parcours les correspondance jusqu'à avoir ateint le nombre de correspondance max, si il s'agit des brins, il parcours tout les brins et brins opposé jusqu'a retombé sur le premier brin de la station d'origine. C'est la seul grosse différence entre les deux algorithmes.
+Il complete le le poid de la liste et les autres paramètre. Le code va ensuite choisir de refaire boucler l'algorithme avec la station dont le poids dans la liste est le plus petits. jusqu'a arriver a la station d'arrivé.
+Si la station suivante est sur la ligne, le poid est de +1, autrement il est de +2. Le poid est fait en fonction des correspondance et non sur la durée ou la distance. (Bien sur si il y avait un ligne equivalent a la ligne 13, le poid aurait été de +5)
+A la fin, le code cite le trajets dans l'ordre inverse. Il faut donc lire le trajets de bas en haut.
+Au cas ou, il y a une sécurité pour evité que le programme boucle a l'infini. Je trouve toujours des petites correspondance mal relié ce qui a tendance a faire des choses improbables et bien souvent a bouclé a l'infini lorsqu'il ne trouve pas de station avec un poids inferieur et non vu.
+
+\subsection{Les autres fonctions}
+D'autres fonctions plus ou moins utile sont présente. Notamment le main qui semble étrangement être utile. Mais on peut aussi trouver d'autres fonction comme une fonction pour afficher les stations, une autre pour recuperer les entrée saisie des utilisateurs. 4 fonctions pour comparer et recuperer les lignes communes, une fonction pour renvoyer le brin opposé en entré.
+
